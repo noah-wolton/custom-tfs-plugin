@@ -1,0 +1,8 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+         xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:section title="Team Foundation Server">
+        <f:entry title="TF command line executable" >
+            <f:textbox name="tfs.tfExecutable" value="${descriptor.tfExecutable}"/>
+        </f:entry>
+    </f:section>
+</j:jelly>
