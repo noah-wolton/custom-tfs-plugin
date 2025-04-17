@@ -70,7 +70,7 @@ public class SimpleTFSSCM extends SCM {
     public void checkout(Run<?,?> build, Launcher launcher, FilePath workspace, TaskListener listener, File changelogFile, SCMRevisionState baseline) throws IOException, InterruptedException
     {
         String workspaceShortened = String.valueOf(workspace);
-        //workspaceShortened = workspaceShortened.substring(0, workspaceShortened.length() - 20);
+        workspaceShortened = workspaceShortened.substring(0, workspaceShortened.length() - 50);
         System.out.println("Checking out");
 
         System.out.println(workspaceShortened);
@@ -124,6 +124,10 @@ public class SimpleTFSSCM extends SCM {
         }
         output = runCommand(builder);
         System.out.println(output);
+
+        File fullWorkspaceDir = new File(String.valueOf(workspace));
+        workspaceDir.renameTo(fullWorkspaceDir);
+
     }
 
     @Override
