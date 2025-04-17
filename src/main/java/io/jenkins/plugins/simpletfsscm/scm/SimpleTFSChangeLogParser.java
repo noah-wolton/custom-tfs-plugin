@@ -1,4 +1,4 @@
-package io.jenkins.plugins.simpletfsscm;
+package io.jenkins.plugins.simpletfsscm.scm;
 
 import hudson.scm.ChangeLogParser;
 

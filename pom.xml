@@ -77,6 +77,12 @@
       <artifactId>workflow-job</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-scm-step</artifactId>
+      <version>427.v4ca_6512e7df1</version>
+      <scope>compile</scope>
+    </dependency>
 
 
   </dependencies>

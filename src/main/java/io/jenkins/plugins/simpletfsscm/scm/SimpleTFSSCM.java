@@ -1,11 +1,11 @@
-package io.jenkins.plugins.simpletfsscm;
+package io.jenkins.plugins.simpletfsscm.scm;
 
-import groovy.transform.Field;
 import hudson.Extension;
 import hudson.FilePath;
 import java.io.File;
 import hudson.Launcher;
 import hudson.Util;
+import hudson.model.Job;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.scm.*;
@@ -19,9 +19,8 @@ import org.kohsuke.stapler.StaplerRequest;
 
 public class SimpleTFSSCM extends SCM {
 
-    private final String server, username, password, workspaceName;
+    private String server, username, password, workspaceName;
     boolean cleanCopy;
-    DescriptorImpl myDescriptor = new DescriptorImpl();
 
     @DataBoundConstructor
     public SimpleTFSSCM(String server, boolean cleanCopy, String username, String password, String workspaceName) {
@@ -47,6 +46,8 @@ public class SimpleTFSSCM extends SCM {
     {
         System.out.println("Checking out");
 
+
+
     }
 
     @Override
@@ -59,7 +60,7 @@ public class SimpleTFSSCM extends SCM {
         return server;
     }
 
-    public boolean getCleanCopy() {
+    public boolean isCleanCopy() {
         return cleanCopy;
     }
 
@@ -95,6 +96,7 @@ public class SimpleTFSSCM extends SCM {
         return (DescriptorImpl) super.getDescriptor();
     }
 
+
     @Extension
     public static class DescriptorImpl extends SCMDescriptor {
         private String tfExecutable;
@@ -106,8 +108,9 @@ public class SimpleTFSSCM extends SCM {
 
         @Override
         public SCM newInstance(final StaplerRequest req, final JSONObject formData) throws FormException {
-            SimpleTFSSCM scm = (SimpleTFSSCM) super.newInstance(req, formData);
-            return scm;
+            //SimpleTFSSCM scm = (SimpleTFSSCM) super.newInstance(req, formData);
+            //return scm;
+            return req.bindJSON(SimpleTFSSCM.class, formData);
         }
 
         @Override
@@ -125,6 +128,13 @@ public class SimpleTFSSCM extends SCM {
             save();
             return true;
         }
+
+        @Override
+        public boolean isApplicable(Job project) {
+            return true;
+        }
+
+        //public FormValidation doCheckServer(@QueryParameter String value)
 
     }
 }

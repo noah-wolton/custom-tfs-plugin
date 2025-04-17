@@ -1,7 +1,7 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
          xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:entry title="Server URL">
-        <f:textbox name="scm.server" value="${scm.server}"/>
+    <f:entry title="Server URL" field="server">
+        <f:textbox  value="${scm.server}"/>
     </f:entry>
 
     <!--<f:entry title="Name of project">  help="/plugin/tfs/project.html"
@@ -10,19 +10,19 @@
         <f:textbox />
     </f:entry>-->
 
-    <f:entry title="Workspace name">
-        <f:textbox name="scm.workspaceName" value="${scm.workspaceName}"/>
+    <f:entry title="Workspace name" field="workspaceName">
+        <f:textbox value="${scm.workspaceName}"/>
     </f:entry>
-    <f:entry title="Username">
-        <f:textbox name="scm.username" value="${scm.username}" />
+    <f:entry title="Username" field="username">
+        <f:textbox value="${scm.username}" />
     </f:entry>
-    <f:entry title="Password">
-        <f:secretTextarea name="scm.password" value="${scm.password}" />
+    <f:entry title="Password" field="password">
+        <f:password value="${scm.password}" />
     </f:entry>
 
     <f:advanced>
-        <f:entry title="Clean copy">
-            <f:checkbox name="scm.cleanCopy" checked="${scm.cleanCopy}"/>
+        <f:entry title="Clean copy" field="cleanCopy">
+            <f:checkbox checked="${scm.cleanCopy}"/>
             If checked, Hudson will delete the directory and all its contents before downloading the files
             from the repository for every build.
         </f:entry>
