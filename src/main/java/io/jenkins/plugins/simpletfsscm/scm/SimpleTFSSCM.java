@@ -16,6 +16,7 @@ import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
+import org.springframework.security.core.parameters.P;
 
 public class SimpleTFSSCM extends SCM {
 
@@ -46,6 +47,20 @@ public class SimpleTFSSCM extends SCM {
     {
         System.out.println("Checking out");
 
+        System.out.println(workspace);
+
+        String tfExec = getDescriptor().getTfExecutable();
+
+        boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+        ProcessBuilder builder = new ProcessBuilder();
+        if (isWindows) {
+            builder.command(tfExec,"workspaces");
+        }
+
+        builder.directory(new File(String.valueOf(workspace)));
+        Process process = builder.start();
+
+        System.out.println(process.waitFor());
 
 
     }
