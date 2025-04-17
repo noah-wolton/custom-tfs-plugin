@@ -2,6 +2,8 @@ package io.jenkins.plugins.simpletfsscm.scm;
 
 import hudson.Extension;
 import hudson.FilePath;
+
+import java.io.BufferedReader;
 import java.io.File;
 import hudson.Launcher;
 import hudson.Util;
@@ -11,58 +13,117 @@ import hudson.model.TaskListener;
 import hudson.scm.*;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import net.sf.json.JSONObject;
-import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
-import org.springframework.security.core.parameters.P;
 
 public class SimpleTFSSCM extends SCM {
 
-    private String server, username, password, workspaceName;
+    private String server, projectPath;
     boolean cleanCopy;
 
     @DataBoundConstructor
-    public SimpleTFSSCM(String server, boolean cleanCopy, String username, String password, String workspaceName) {
+    public SimpleTFSSCM(String server, boolean cleanCopy, String projectPath) {
         this.server = server;
-        this.username = username;
-        this.password = password;
-        this.workspaceName = workspaceName;
+        this.projectPath = projectPath;
         this.cleanCopy = cleanCopy;
     }
 
-    /*
-    public SimpleTFSSCM(String server, String projectName, String username, String password, String domain, String workspaceName) {
-        this.server = server;
-        this.projectName = projectName;
-        this.username = username;
-        this.password = password;
-        this.domain = domain;
-        this.workspaceName = workspaceName;
-    }*/
+    private Map<String, String> runCommand(ProcessBuilder command) throws IOException, InterruptedException {
+        System.out.println(String.join(" ", command.command().toArray(new String[0])));
+        Process process = command.start();
+
+        BufferedReader Errorreader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+        StringBuilder builder = new StringBuilder();
+        String line = null;
+        while ( (line = reader.readLine()) != null) {
+            builder.append(line);
+            builder.append(System.getProperty("line.separator"));
+        }
+        String result = builder.toString();
+
+        StringBuilder builder2 = new StringBuilder();
+        String line2 = null;
+        while ( (line2 = Errorreader.readLine()) != null) {
+            builder2.append(line2);
+            builder2.append(System.getProperty("line.separator"));
+        }
+        String Errorresult = builder2.toString();
+
+        process.waitFor();
+
+        Map<String, String> output = new HashMap<>();
+        output.put("Output", result);
+        output.put("Error", Errorresult);
+
+        return output;
+    }
 
     @Override
     public void checkout(Run<?,?> build, Launcher launcher, FilePath workspace, TaskListener listener, File changelogFile, SCMRevisionState baseline) throws IOException, InterruptedException
     {
+        String workspaceShortened = String.valueOf(workspace);
+        //workspaceShortened = workspaceShortened.substring(0, workspaceShortened.length() - 20);
         System.out.println("Checking out");
 
-        System.out.println(workspace);
+        System.out.println(workspaceShortened);
 
         String tfExec = getDescriptor().getTfExecutable();
+        System.out.println(tfExec);
 
+        File workspaceDir = new File(workspaceShortened);
+        workspaceDir.mkdir();
         boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
         ProcessBuilder builder = new ProcessBuilder();
+        //builder.inheritIO();
         if (isWindows) {
-            builder.command(tfExec,"workspaces");
+            builder.command(tfExec,"workspace", "/new", "/collection:"+server);
         }
 
-        builder.directory(new File(String.valueOf(workspace)));
-        Process process = builder.start();
 
-        System.out.println(process.waitFor());
+        builder.directory(workspaceDir);
+        Map<String,String> output = runCommand(builder);
+        String errorOut = output.get("Error");
+        System.out.println(output);
 
+        if (errorOut.contains("already exists on computer")) {
+            String existingWorkspace = errorOut.replaceAll(".*?workspace\\s+(.*?)\\s+already.*", "$1");
+            System.out.println(existingWorkspace);
 
+            if (isWindows) {
+                builder.command(tfExec, "workspace", "/delete", "/collection:"+server, existingWorkspace);
+            }
+            Map<String,String> output2 = runCommand(builder);
+            System.out.println(output2);
+
+            if (isWindows) {
+                builder.command(tfExec,"workspace", "/new", "/collection:"+server);
+            }
+            output = runCommand(builder);
+            System.out.println(output);
+        }
+
+        String out = output.get("Output");
+        String createdWorkspace = out.replaceAll(".*?'(.*?)'.*", "$1").stripTrailing();
+        System.out.println(createdWorkspace);
+
+        if (isWindows) {
+            builder.command(tfExec,"workfold", "/map", "/collection:"+server, "/workspace:"+createdWorkspace, projectPath, workspaceShortened);
+        }
+        output = runCommand(builder);
+        System.out.println(output);
+        if (isWindows) {
+            builder.command(tfExec,"get");
+        }
+        output = runCommand(builder);
+        System.out.println(output);
     }
 
     @Override
@@ -79,21 +140,9 @@ public class SimpleTFSSCM extends SCM {
         return cleanCopy;
     }
 
-    public String getUsername() {
-        return username;
-    }
 
-    public String getPassword() {
-        return password;
-    }
-
-    /*
-    public String getDomain() {
-        return domain;
-    }*/
-
-    public String getWorkspaceName() {
-        return workspaceName;
+    public String getProjectPath() {
+        return projectPath;
     }
 
     @Override

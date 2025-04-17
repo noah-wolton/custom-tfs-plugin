@@ -26,7 +26,7 @@ public class SimpleTFSSCMStep extends SCMStep {
 
     @Override
     protected SCM createSCM() {
-        return new SimpleTFSSCM(server, cleanCopy, username, password, workspaceName);
+        return new SimpleTFSSCM(server, cleanCopy, workspaceName);
     }
 
     @Extension

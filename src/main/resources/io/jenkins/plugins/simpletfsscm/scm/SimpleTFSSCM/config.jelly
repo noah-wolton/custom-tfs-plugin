@@ -10,14 +10,8 @@
         <f:textbox />
     </f:entry>-->
 
-    <f:entry title="Workspace name" field="workspaceName">
-        <f:textbox value="${scm.workspaceName}"/>
-    </f:entry>
-    <f:entry title="Username" field="username">
-        <f:textbox value="${scm.username}" />
-    </f:entry>
-    <f:entry title="Password" field="password">
-        <f:password value="${scm.password}" />
+    <f:entry title="Project Path" field="projectPath">
+        <f:textbox value="${scm.projectPath}"/>
     </f:entry>
 
     <f:advanced>
