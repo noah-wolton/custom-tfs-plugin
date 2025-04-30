@@ -69,6 +69,11 @@ public class SimpleTFSSCM extends SCM {
     @Override
     public void checkout(Run<?,?> build, Launcher launcher, FilePath workspace, TaskListener listener, File changelogFile, SCMRevisionState baseline) throws IOException, InterruptedException
     {
+        boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+        ProcessBuilder builder = new ProcessBuilder();
+        File fullWorkspaceDir = new File(String.valueOf(workspace));
+
+        System.out.println(String.valueOf(workspace));
         String workspaceShortened = String.valueOf(workspace);
         workspaceShortened = workspaceShortened.substring(0, workspaceShortened.length() - 50);
         System.out.println("Checking out");
@@ -79,16 +84,35 @@ public class SimpleTFSSCM extends SCM {
         System.out.println(tfExec);
 
         File workspaceDir = new File(workspaceShortened);
+
+        if (workspaceDir.exists()) {
+            workspaceDir.renameTo(fullWorkspaceDir);
+        }
+
+        if (fullWorkspaceDir.exists()) {
+            System.out.println("Workspace exists... Pulling.");
+
+            fullWorkspaceDir.renameTo(workspaceDir);
+            File sourceDir = new File(workspaceShortened+"\\Source");
+            builder.directory(sourceDir);
+            builder.command(tfExec,"get");
+            Map<String,String> output = runCommand(builder);
+            System.out.println(output);
+
+            workspaceDir.renameTo(fullWorkspaceDir);
+
+            return;
+        }
+
         workspaceDir.mkdir();
-        boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
-        ProcessBuilder builder = new ProcessBuilder();
-        //builder.inheritIO();
+        File sourceDir = new File(String.valueOf(workspaceDir)+"\\Source");
+        sourceDir.mkdir();
+
         if (isWindows) {
             builder.command(tfExec,"workspace", "/new", "/collection:"+server);
         }
 
-
-        builder.directory(workspaceDir);
+        builder.directory(sourceDir);
         Map<String,String> output = runCommand(builder);
         String errorOut = output.get("Error");
         System.out.println(output);
@@ -115,7 +139,7 @@ public class SimpleTFSSCM extends SCM {
         System.out.println(createdWorkspace);
 
         if (isWindows) {
-            builder.command(tfExec,"workfold", "/map", "/collection:"+server, "/workspace:"+createdWorkspace, projectPath, workspaceShortened);
+            builder.command(tfExec,"workfold", "/map", "/collection:"+server, "/workspace:"+createdWorkspace, projectPath, workspaceShortened+"\\Source");
         }
         output = runCommand(builder);
         System.out.println(output);
@@ -125,7 +149,7 @@ public class SimpleTFSSCM extends SCM {
         output = runCommand(builder);
         System.out.println(output);
 
-        File fullWorkspaceDir = new File(String.valueOf(workspace));
+
         workspaceDir.renameTo(fullWorkspaceDir);
 
     }
@@ -162,6 +186,23 @@ public class SimpleTFSSCM extends SCM {
     @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
+    }
+
+    // I copied this from the actual TFS plugin: https://github.com/jenkinsci/tfs-plugin/blob/master/tfs/src/main/java/hudson/plugins/tfs/TeamFoundationServerScm.java
+    @Override
+    public SCMRevisionState calcRevisionsFromBuild(final Run<?, ?> build,
+                                                   final FilePath workspace,
+                                                   final Launcher launcher, final TaskListener listener) throws IOException,
+            InterruptedException {
+        /*
+         * This method does nothing, since the work has already been done in
+         * the checkout() method, as per the documentation:
+         * """
+         * As an optimization, SCM implementation can choose to compute SCMRevisionState
+         * and add it as an action during check out, in which case this method will not called.
+         * """
+         */
+        return SCMRevisionState.NONE;
     }
 
 
